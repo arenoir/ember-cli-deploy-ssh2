@@ -9,7 +9,7 @@
 <hr/>
 
 
-This plugin uploads, activates and lists deployed revisions. It is different from other plugins as it works with multiple `applicationFiles`. The primary use case is being able to keep the `index.html` and `manifest.appcache` file versioned and activated together. 
+This plugin uploads, activates and lists deployed revisions. It is different from other plugins as it works with multiple `applicationFiles`. The primary use case is being able to keep the `index.html` and `manifest.appcache` files versioned and activated together. 
 
 
 ## Quick Start
@@ -64,7 +64,7 @@ $ ember deploy
 ### port
   The port to connect on. 
 
-*Default:* ```['/']```
+*Default:* ```'22'```
 
 ### applicationFiles
   A list of files to upload to the server. 

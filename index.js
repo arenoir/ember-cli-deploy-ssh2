@@ -217,32 +217,6 @@ module.exports = {
         return this.__client;
       },
 
-      _configureClient: function() {
-        var client = new sshClient();
-        var privateKeyPath = this.readConfig('privateKeyPath');
-        var privateKey;
-
-        if (privateKeyPath) {
-          privateKey = fs.readFileSync(privateKeyPath);
-        }
-        var options = {
-          host: this.readConfig('host'),
-          username: this.readConfig('username'),
-          port: this.readConfig('port'),
-          privateKey: privateKey
-        }
-
-        client.connect(options);
-
-        this.__client = client;
-
-        //return client;
-        return new Promise(function(resolve, reject) {
-          client.on('ready', resolve);
-        });
-        
-      },
-
       fetchRevisions: function(context) {
         return this._fetchRevisionManifest().then(
           function(manifest) {
