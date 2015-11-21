@@ -3,106 +3,12 @@
 
 var Promise          = require('ember-cli/lib/ext/promise');
 var DeployPluginBase = require('ember-cli-deploy-plugin');
-var sshClient        = require('ssh2').Client;
 var path             = require('path');
 var fs               = require('fs');
 var os               = require('os');
 var username         = require('username');
 var lodash           = require('lodash');
-
-function upload(client, path, data) {
-  return new Promise(function (resolve, reject){
-    client.sftp(function(error, sftp) {
-      if (error) {
-        reject(error);
-      };
-      
-      var stream = sftp.createWriteStream(path);
-      
-      stream.on('error', reject);
-      stream.on('finish', resolve);
-      stream.write(data);
-      stream.end();
-    });
-  });
-};
-
-function readFile(client, path) {
-  var buffer = fs.createWriteStream('tmp/readFile');
-
-  return new Promise(function(resolve, reject) {
-    client.sftp(function(error, sftp) {
-      if (error) {
-        reject(error);
-      };
-
-      sftp.readFile(path, {}, function (error, data) {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(data);
-        }
-      });
-    });
-  });
-};
-
-function uploadFile(client, scr, dest) {
-  return new Promise(function(resolve, reject) {
-    client.sftp(function(error, sftp) {
-      if (error) {
-        reject(error);
-      };
-
-      sftp.fastPut(src, dest, {}, function (err) {
-        if (err) {
-          reject(err);
-        };          
-        resolve();
-      });
-    });
-  });
-}
-
-function clientExec(client, command) {
-  return new Promise(function(resolve, reject) {
-    client.exec(command, function(err, stream) {
-      if (err) {
-        reject(err);
-      };
-      resolve();
-    });
-  });
-}
-
-
-function putFile(client, src, dest) {
-  return new Promise(function(resolve, reject) {
-    var parts = dest.split('/');
-    var filename = parts.pop();
-    var destdir = parts.join('/');
-    var scpcmd  = 'mkdir -p ' + destdir;
-
-    clientExec(client, scpcmd).then(
-      function() {
-        client.sftp(function (err, sftp) {
-          if (err) {
-            reject(err);
-          }
-           
-          sftp.fastPut(src, dest, {}, function (err) {
-            if (err) {
-              reject(err);
-            };
-            resolve();
-          });
-        })
-      },
-      reject
-    );
-  });
-}
-
+var sshClient        = require('./lib/ssh-client');
 
 module.exports = {
   name: 'ember-cli-deploy-ssh2',
@@ -110,14 +16,17 @@ module.exports = {
   createDeployPlugin: function(options) {
     var DeployPlugin = DeployPluginBase.extend({
       name: options.name,
-      __client: null,
+      _sshClient: sshClient,
+      _client: null,
       defaultConfig: {
         distDir: function(context) {
           return context.distDir;
         },
         host: '',
         username: '',
-        privateKeyPath: '~/.ssh/id_rsa',
+        password: null,
+        privateKeyPath: null,
+        agent: null,
         port: 22,
         applicationFiles: ['index.html'],
         
@@ -144,7 +53,7 @@ module.exports = {
         },
 
         revisionKey: function(context) {
-          return context.commandOptions.revision || (context.revisionData && context.revisionData.revisionKey);
+          return (context.commandOptions && context.commandOptions.revision) || (context.revisionData && context.revisionData.revisionKey);
         },
 
         revisionMeta: function(context) {
@@ -156,40 +65,28 @@ module.exports = {
             deployer: who,
             timestamp: new Date().getTime(),
           }
-        }
+        },
       },
 
       configure: function(context) {
         this._super.configure.call(this, context);
-        //Object.keys(this.defaultConfig).forEach(this.applyDefaultConfigProperty.bind(this));
-        
-        var client = new sshClient();
-        var privateKeyPath = this.readConfig('privateKeyPath');
-        var privateKey;
 
-        if (privateKeyPath) {
-          privateKey = fs.readFileSync(privateKeyPath);
-        }
         var options = {
           host: this.readConfig('host'),
           username: this.readConfig('username'),
+          password: this.readConfig('password'),
           port: this.readConfig('port'),
-          privateKey: privateKey
+          privateKeyPath: this.readConfig('privateKeyPath'),
+          agent: this.readConfig('agent')
         }
 
-        client.connect(options);
-
-        this.__client = client;
-        //return client;
-        return new Promise(function(resolve, reject) {
-          client.on('ready', resolve);
-        });
+        this._client = new this._sshClient(options)
+        return this._client.connect(this);
       },
 
       activate: function(context) {
-        this.log(this.readConfig('revisionKey'));
         var _this = this;
-        var client = this.__client;
+        var client = this._client;
         var redisDeployClient = this.readConfig('redisDeployClient');
         var revisionKey = this.readConfig('revisionKey');
         var activationDestination = this.readConfig('activationDestination');
@@ -198,11 +95,10 @@ module.exports = {
 
         this.log('Activating revision ' + revisionKey);
 
-        
         var linkCmd = 'ln -fs ' + activeRevisionPath + ' ' + activationDestination;
         
         return new Promise(function(resolve, reject) {
-          clientExec(client, linkCmd, _this).then(
+          client.exec(linkCmd, _this).then(
             function() {
               _this.log('clientExeced');
               _this.log('activate now');
@@ -213,41 +109,40 @@ module.exports = {
         });
       },
 
-      _client: function() {
-        return this.__client;
-      },
 
       fetchRevisions: function(context) {
+        var _this = this;
+        this.log('Fetching Revisions');
+
         return this._fetchRevisionManifest().then(
           function(manifest) {
             context.revisions = manifest;
           },
           function(error) {
-            this.log(error, {color: 'red'});
+            _this.log(error, {color: 'red'});
           }
         );
       },
 
       upload: function(context) {
         var _this = this;
-        
+
         return this._updateRevisionManifest().then(
           function() {
             return _this._uploadFiles();
           },
           function(error) {
-            this.log(error, {color: "red"})
+            _this.log(error, {color: "red"})
           }
         );
       },
 
       teardown: function(context) {
-        this.log('teardown');
-        this.__client && this.__client.end();
+        return this._client.disconnect();
       },
 
       _uploadFiles: function(context) {
-        var client = this._client();
+        var client = this._client;
         var files = this.readConfig('applicationFiles');
         var distDir = this.readConfig('distDir');
         var revisionKey = this.readConfig('revisionKey');
@@ -263,7 +158,7 @@ module.exports = {
             var src = path.join(distDir, file);
             var dest = path.join(destination, file);
 
-            promises.push(putFile(client, src, dest, _this));
+            promises.push(client.putFile(src, dest, _this));
           });
 
           Promise.all(promises).then(resolve, reject);
@@ -283,7 +178,7 @@ module.exports = {
 
       _activateRevisionManifest: function(context) {
         var _this = this;
-        var client = this._client();
+        var client = this._client;
         var revisionKey = this.readConfig('revisionKey');
         var fetching = this._fetchRevisionManifest();
         var manifestPath = this.readConfig('revisionManifest');
@@ -300,11 +195,9 @@ module.exports = {
                 return rev;
               });
 
-              _this.log(JSON.stringify(manifest));
-
               var data = new Buffer(JSON.stringify(manifest), "utf-8");
 
-              upload(client, manifestPath, data, _this).then(resolve, reject);         
+              client.upload(manifestPath, data, _this).then(resolve, reject);         
             },
             function(error) {
               _this.log(error, {color: 'red'});
@@ -318,25 +211,29 @@ module.exports = {
         var revisionKey = this.readConfig('revisionKey');
         var revisionMeta = this.readConfig('revisionMeta');
         var manifestPath = this.readConfig('revisionManifest');
-        var fetching = this._fetchRevisionManifest();
-        var client   = this._client();
+        var client = this._client;
         var _this = this;
-
 
         this.log(JSON.stringify(revisionMeta));
 
         return new Promise(function(resolve, reject) {
-          fetching.then(
+          _this._fetchRevisionManifest().then(
             function(manifest) {
-              manifest = lodash.reject(manifest, {'revision':  revisionKey});
+              manifest.forEach(function(rev) {
+                if (rev.revision === revisionKey) {
+                  resolve();
+                  return;
+                }
+              });
+
               manifest.unshift(revisionMeta);
 
               var data = new Buffer(JSON.stringify(manifest), "utf-8");
 
-              upload(client, manifestPath, data, _this).then(resolve, reject);         
+              client.upload(manifestPath, data).then(resolve, reject);         
             },
             function(error) {
-              _this.log(error, {color: 'red'});
+              _this.log(error.message, {color: 'red'});
               reject(error);
             }
           );
@@ -345,22 +242,25 @@ module.exports = {
 
       _fetchRevisionManifest: function() {
         var manifestPath = this.readConfig('revisionManifest');
-        var client = this._client();
+        var client = this._client;
         var _this = this;
+
         return new Promise(function(resolve, reject) {
-          readFile(client, manifestPath, _this).then(
+          client.readFile(manifestPath).then(
             function(manifest) {
               resolve(JSON.parse(manifest));
             },
             function(error) {
-              //_this.log('no such file?', {color: 'red'});
-              //_this.log(error, {color: 'red'});
-              return resolve([]);
+              if (error.message === "No such file") {
+                resolve([]);
+              } else {
+                _this.log(error.message, {color: 'red'});
+                reject(error);
+              }
             }
           );
         });
-      },
-
+      }
     });
 
     return new DeployPlugin();

@@ -7,9 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "ember build",
-    "start": "ember server",
-    "test": "ember try:testall"
+    "test": "node tests/runner.js"
   },
   "repository": "",
   "engines": {
@@ -19,6 +17,8 @@
   "license": "MIT",
   "devDependencies": {
     "broccoli-asset-rev": "^2.2.0",
+    "chai": "^3.4.1",
+    "chai-as-promised": "^5.1.0",
     "ember-cli": "1.13.12",
     "ember-cli-app-version": "^1.0.0",
     "ember-cli-content-security-policy": "0.4.0",
@@ -38,11 +38,8 @@
     "ember-try": "~0.0.8",
     "glob": "^5.0.5",
     "mocha": "^2.2.4",
-    "multiline": "^1.0.2",
-    "node-fs": "^0.1.7",
-    "ssh2": "^0.4.12",
-    "untildify": "^2.1.0",
-    "username": "^1.0.1"
+    "mocha-jshint": "^2.2.5",
+    "multiline": "^1.0.2"
   },
   "keywords": [
     "ember-addon",
@@ -50,9 +47,14 @@
   ],
   "dependencies": {
     "chalk": "^1.0.0",
+    "core-object": "^1.1.0",
     "ember-cli-babel": "^5.1.5",
     "ember-cli-deploy-plugin": "0.2.0",
-    "lodash": "^3.10.1"
+    "lodash": "^3.10.1",
+    "untildify": "^2.1.0",
+    "node-fs": "^0.1.7",
+    "ssh2": "^0.4.12",
+    "username": "^1.0.1"
   },
   "ember-addon": {
     "configPath": "tests/dummy/config"
