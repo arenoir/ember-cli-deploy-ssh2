@@ -1,14 +1,12 @@
 'use strict';
 
 var fs     = require('node-fs');
-var path   = require('path');
 var assert = require('ember-cli/tests/helpers/assert');
 var CoreObject = require('core-object');
-//var sshClient = require('../../../lib/ssh-client');
 
 var mockSSHClient = CoreObject.extend({
   init: function(options) {
-    this.options = options
+    this.options = options;
   },
 
   connect: function() {
@@ -26,7 +24,7 @@ var mockSSHClient = CoreObject.extend({
       if (readFileError) {
         reject(readFileError);
       } else {
-        var file = uploads[path]
+        var file = uploads[path];
         resolve(file);
       }
     });
@@ -37,34 +35,29 @@ var mockSSHClient = CoreObject.extend({
   upload: function(path, data) {
     var files = this._uploadedFiles;
 
-    return new Promise(function(resolve, reject) {
+    return new Promise(function(resolve) {
       files[path] = data.toString();
-      resolve()
+      resolve();
     });
   },
 
   putFile: function(src, dest) {
     var files = this._uploadedFiles;
 
-    var file = fs.readFileSync(src, "utf8")
+    var file = fs.readFileSync(src, "utf8");
 
-    return new Promise(function(resolve, reject) {
+    return new Promise(function(resolve) {
       files[dest] = file.toString();
-      resolve()
+      resolve();
     });
   }
 });
 
 
 describe('the deploy plugin object', function() {
-  var fixtureRoot;
-  var distDir;
   var plugin;
-  var promise;
-  var indexPage;
-  var fixturePage;
-  var manifestFile;
   var configure;
+  var context;
 
   before(function() {
 
@@ -77,7 +70,7 @@ describe('the deploy plugin object', function() {
       name: 'ssh2',
     });
 
-    var context = {
+    context = {
       ui: {write: function() {}, writeLine: function() {}},
       config: {
         'ssh2': {
@@ -86,12 +79,12 @@ describe('the deploy plugin object', function() {
           applicationFiles: ['index.html', 'manifest.appcache'],
           root: '/usr/local/www/my-app',
           distDir: 'tests/fixtures/dist',
-          revisionMeta: function(context) {
+          revisionMeta: function() {
             var revisionKey = this.readConfig('revisionKey');
           
             return {
               revision: revisionKey,
-            }
+            };
           },
         }
       },
@@ -140,7 +133,7 @@ describe('the deploy plugin object', function() {
     it('assigins context.revisions property.', function() {
       var revisions = [{"revision": "4564564545646"}];
       var client = plugin._client;
-      var files = {}
+      var files = {};
 
       files["/usr/local/www/my-app/revisions.json"] = JSON.stringify(revisions);
 
@@ -156,7 +149,7 @@ describe('the deploy plugin object', function() {
     it('assigins context.revisions proptery to empty array if revistion file not found.', function() {
       var client = plugin._client;
       
-      client._readFileError = new Error('No such file')
+      client._readFileError = new Error('No such file');
       client._readFile = null;
 
       var fetching = plugin.fetchRevisions(context);
@@ -180,8 +173,8 @@ describe('the deploy plugin object', function() {
       var uploading = plugin.upload(context);
 
       return assert.isFulfilled(uploading).then(function() {
-        var manifest = client._uploadedFiles[manifestPath]
-        revisions.unshift({'revision': '89b1d82820a24bfb075c5b43b36f454b'})
+        var manifest = client._uploadedFiles[manifestPath];
+        revisions.unshift({'revision': '89b1d82820a24bfb075c5b43b36f454b'});
         assert.equal(JSON.stringify(revisions), manifest); 
       });
     });

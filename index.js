@@ -4,7 +4,6 @@
 var Promise          = require('ember-cli/lib/ext/promise');
 var DeployPluginBase = require('ember-cli-deploy-plugin');
 var path             = require('path');
-var fs               = require('fs');
 var os               = require('os');
 var username         = require('username');
 var lodash           = require('lodash');
@@ -25,7 +24,7 @@ module.exports = {
         host: '',
         username: '',
         password: null,
-        privateKeyPath: null,
+        privateKeyPath: '~/.ssh/id_rsa',
         agent: null,
         port: 22,
         applicationFiles: ['index.html'],
@@ -34,19 +33,19 @@ module.exports = {
           return path.join('/usr/local/www', context.project.name());
         },
 
-        activationDestination: function(context) {
+        activationDestination: function(/*context*/) {
           var root = this.readConfig('root');
 
           return path.join(root, 'active');
         },
         
-        uploadDestination: function(context){
+        uploadDestination: function(/*context*/){
           var root = this.readConfig('root');
 
           return path.join(root, 'revisions');
         },
 
-        revisionManifest: function(context) {
+        revisionManifest: function(/*context*/) {
           var root = this.readConfig('root');
 
           return path.join(root, 'revisions.json');
@@ -56,7 +55,7 @@ module.exports = {
           return (context.commandOptions && context.commandOptions.revision) || (context.revisionData && context.revisionData.revisionKey);
         },
 
-        revisionMeta: function(context) {
+        revisionMeta: function(/*context*/) {
           var revisionKey = this.readConfig('revisionKey');
           var who = username.sync() + '@' + os.hostname();
           
@@ -64,7 +63,7 @@ module.exports = {
             revision: revisionKey,
             deployer: who,
             timestamp: new Date().getTime(),
-          }
+          };
         },
       },
 
@@ -78,16 +77,15 @@ module.exports = {
           port: this.readConfig('port'),
           privateKeyPath: this.readConfig('privateKeyPath'),
           agent: this.readConfig('agent')
-        }
+        };
 
-        this._client = new this._sshClient(options)
+        this._client = new this._sshClient(options);
         return this._client.connect(this);
       },
 
-      activate: function(context) {
+      activate: function(/*context*/) {
         var _this = this;
         var client = this._client;
-        var redisDeployClient = this.readConfig('redisDeployClient');
         var revisionKey = this.readConfig('revisionKey');
         var activationDestination = this.readConfig('activationDestination');
         var uploadDestination = path.join(this.readConfig('uploadDestination'), '/');
@@ -122,7 +120,7 @@ module.exports = {
         );
       },
 
-      upload: function(context) {
+      upload: function(/*context*/) {
         var _this = this;
 
         return this._updateRevisionManifest().then(
@@ -132,16 +130,16 @@ module.exports = {
             return _this._uploadApplicationFiles();
           },
           function(error) {
-            _this.log(error, {color: "red"})
+            _this.log(error, {color: "red"});
           }
         );
       },
 
-      teardown: function(context) {
+      teardown: function(/*context*/) {
         return this._client.disconnect();
       },
 
-      _uploadApplicationFiles: function(context) {
+      _uploadApplicationFiles: function(/*context*/) {
         var client = this._client;
         var files = this.readConfig('applicationFiles');
         var distDir = this.readConfig('distDir');
@@ -176,7 +174,7 @@ module.exports = {
         return uploading;
       },
 
-      _activateRevisionManifest: function(context) {
+      _activateRevisionManifest: function(/*context*/) {
         var _this = this;
         var client = this._client;
         var revisionKey = this.readConfig('revisionKey');
@@ -220,7 +218,7 @@ module.exports = {
           _this._fetchRevisionManifest().then(
             function(manifest) {
               var existing = manifest.some(function(rev) { 
-                return rev.revision === revisionKey
+                return rev.revision === revisionKey;
               });
               
               if (existing) {
