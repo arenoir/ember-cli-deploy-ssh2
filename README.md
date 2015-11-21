@@ -73,6 +73,8 @@ $ ember deploy
 
   A function or string used to determine where to upload `applicationFiles`.
 
+*Note:* ```This directory will not be created it must exist on server.``
+
 *Default:* ```'/usr/local/www/' + context.project.name()```
 
 ### uploadDestination

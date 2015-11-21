@@ -100,8 +100,6 @@ module.exports = {
         return new Promise(function(resolve, reject) {
           client.exec(linkCmd, _this).then(
             function() {
-              _this.log('clientExeced');
-              _this.log('activate now');
               _this._activateRevisionManifest().then(resolve, reject);
             },
             reject
@@ -129,7 +127,9 @@ module.exports = {
 
         return this._updateRevisionManifest().then(
           function() {
-            return _this._uploadFiles();
+            _this.log('Successfully uploaded updated manifest.', {verbose: true});
+
+            return _this._uploadApplicationFiles();
           },
           function(error) {
             _this.log(error, {color: "red"})
@@ -141,7 +141,7 @@ module.exports = {
         return this._client.disconnect();
       },
 
-      _uploadFiles: function(context) {
+      _uploadApplicationFiles: function(context) {
         var client = this._client;
         var files = this.readConfig('applicationFiles');
         var distDir = this.readConfig('distDir');
@@ -208,23 +208,28 @@ module.exports = {
       },
 
       _updateRevisionManifest: function() {
-        var revisionKey = this.readConfig('revisionKey');
+        var revisionKey  = this.readConfig('revisionKey');
         var revisionMeta = this.readConfig('revisionMeta');
         var manifestPath = this.readConfig('revisionManifest');
-        var client = this._client;
-        var _this = this;
+        var client       = this._client;
+        var _this        = this;
 
-        this.log(JSON.stringify(revisionMeta));
+        this.log('Updating `revisionManifest` ' + manifestPath, {verbose: true});
 
         return new Promise(function(resolve, reject) {
           _this._fetchRevisionManifest().then(
             function(manifest) {
-              manifest.forEach(function(rev) {
-                if (rev.revision === revisionKey) {
-                  resolve();
-                  return;
-                }
+              var existing = manifest.some(function(rev) { 
+                return rev.revision === revisionKey
               });
+              
+              if (existing) {
+                _this.log('Revision ' + revisionKey + ' already added to `revisionManifest` moving on.', {verbose: true});
+                resolve();
+                return;
+              }
+
+              _this.log('Adding ' + JSON.stringify(revisionMeta), {verbose: true});
 
               manifest.unshift(revisionMeta);
 
@@ -248,10 +253,14 @@ module.exports = {
         return new Promise(function(resolve, reject) {
           client.readFile(manifestPath).then(
             function(manifest) {
+              _this.log('fetched manifest ' + manifestPath, {verbose: true});
+              
               resolve(JSON.parse(manifest));
             },
             function(error) {
               if (error.message === "No such file") {
+                _this.log('Revision manifest not present building new one.', {verbose: true});
+
                 resolve([]);
               } else {
                 _this.log(error.message, {color: 'red'});
