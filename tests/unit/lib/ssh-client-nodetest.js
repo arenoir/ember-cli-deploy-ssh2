@@ -11,7 +11,7 @@ describe('ssh-client', function() {
   var Redis;
   var options = {
     username: 'aaron',
-    privateKeyPath: '~/.ssh/id_rsa',
+    privateKeyPath: null,
     host: "mydomain.com",
     agent: null,
     port: 22
