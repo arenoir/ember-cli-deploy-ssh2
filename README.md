@@ -1,4 +1,4 @@
-# ember-cli-deploy-ssh2
+# ember-cli-deploy-ssh2 [![Build Status](https://travis-ci.org/arenoir/ember-cli-deploy-ssh2.svg?branch=master)](https://travis-ci.org/arenoir/ember-cli-deploy-ssh2)
 
 > An ember-cli-deploy plugin to upload/activate/list versioned application file/s using ssh.
 
