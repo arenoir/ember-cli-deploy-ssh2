@@ -90,15 +90,23 @@ module.exports = {
         var activationDestination = this.readConfig('activationDestination');
         var uploadDestination = path.join(this.readConfig('uploadDestination'), '/');
         var activeRevisionPath =  path.join(uploadDestination, revisionKey, '/');
+        var revisionData = {
+          revisionData: {
+            activatedRevisionKey: revisionKey
+          }
+        };
 
         this.log('Activating revision ' + revisionKey);
 
         var linkCmd = 'ln -fs ' + activeRevisionPath + ' ' + activationDestination;
         
         return new Promise(function(resolve, reject) {
-          client.exec(linkCmd, _this).then(
+          client.exec(linkCmd).then(
             function() {
-              _this._activateRevisionManifest().then(resolve, reject);
+              _this._activateRevisionManifest().then(
+                resolve(revisionData), 
+                reject
+              );
             },
             reject
           );

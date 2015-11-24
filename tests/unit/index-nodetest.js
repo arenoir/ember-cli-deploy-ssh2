@@ -50,7 +50,16 @@ var mockSSHClient = CoreObject.extend({
       files[dest] = file.toString();
       resolve();
     });
-  }
+  },
+
+  _command: '',
+  exec: function(command) {
+    var _this = this;
+    return new Promise(function(resolve) {
+      _this._command = command;
+      resolve();
+    });
+  },
 });
 
 
@@ -158,6 +167,31 @@ describe('the deploy plugin object', function() {
         assert.deepEqual(context.revisions, []); 
       });
     });
+  });
+
+  describe('activate hook', function() {
+    it('creates a symbolic link to active version', function() {
+      var activating = plugin.activate(context);
+      var client = plugin._client;
+
+      return assert.isFulfilled(activating).then(function() {
+        assert.equal(client._command, 'ln -fs /usr/local/www/my-app/revisions/89b1d82820a24bfb075c5b43b36f454b/ /usr/local/www/my-app/active');
+      });
+    });
+
+    it('returns revisionData', function() {
+      var activating = plugin.activate(context);
+      var expected = {
+        revisionData: {
+          activatedRevisionKey: '89b1d82820a24bfb075c5b43b36f454b'
+        }
+      };
+
+      return assert.isFulfilled(activating).then(function(revisionData) {
+        assert.deepEqual(expected, revisionData);
+      });
+    });
+
   });
 
   describe('upload hook', function() {
