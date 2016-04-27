@@ -58,6 +58,12 @@ $ ember deploy
   The path to a private key to authenticate the ssh connection.
 
 *Default:*  ```'~/.ssh/id_rsa'```
+
+### passphrase
+
+  The passphrase used to decrypt the privateKey.
+
+*Default:*  ```none```
   
 ### port
   The port to connect on. 
