@@ -76,6 +76,7 @@ module.exports = {
           password: this.readConfig('password'),
           port: this.readConfig('port'),
           privateKeyPath: this.readConfig('privateKeyPath'),
+          passphrase: this.readConfig('passphrase'),
           agent: this.readConfig('agent')
         };
 
