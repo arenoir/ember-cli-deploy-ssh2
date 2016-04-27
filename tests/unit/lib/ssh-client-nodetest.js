@@ -3,7 +3,7 @@
 var assert    = require('ember-cli/tests/helpers/assert');
 //var chai      = require('chai');
 //var lodash    = require('lodash');
-var sshClient = require('../../../lib/ssh-client');
+var Client = require('../../../lib/ssh-client');
 
 
 describe('ssh-client', function() {
@@ -19,7 +19,7 @@ describe('ssh-client', function() {
 
     it('sets options', function() {
       // var options = lodash.omit(options, 'username');
-      var client = new sshClient(options);
+      var client = new Client(options);
 
       assert.equal(client.options, options);
     });
