@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.0.3] - 2016-05-02
+- Add activationStrategy to config options. Because nginx on alpine linux wasn't following a symlink from a alias directive.
+
 ## [0.0.2] - 2016-04-26
 - Update ssh2 module thus dropping support for node v0.8
 - [Issue #5](https://github.com/arenoir/ember-cli-deploy-ssh2/issues/5) Add passphrase to config options.

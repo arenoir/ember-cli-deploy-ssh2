@@ -105,6 +105,13 @@ function(context) {
 }
 ```
 
+### activationStrategy
+  
+  How revisions are activated either by symlink or copying revision directory.
+
+*Default:* ```"symlink"```
+
+
 ### revisionManifest
   
   A string or a function returning the path where the revision manifest is located.
