@@ -179,6 +179,18 @@ describe('the deploy plugin object', function() {
       });
     });
 
+    it('copies revision to active', function() {
+      context.config.ssh2.activationStrategy = "copy";
+      plugin.configure(context);
+      
+      var activating = plugin.activate(context);
+      var client = plugin._client;
+
+      return assert.isFulfilled(activating).then(function() {
+        assert.equal(client._command, 'cp -rf /usr/local/www/my-app/revisions/89b1d82820a24bfb075c5b43b36f454b/ /usr/local/www/my-app/active');
+      });
+    });
+
     it('returns revisionData', function() {
       var activating = plugin.activate(context);
       var expected = {

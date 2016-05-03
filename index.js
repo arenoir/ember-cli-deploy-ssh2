@@ -38,6 +38,8 @@ module.exports = {
 
           return path.join(root, 'active');
         },
+
+        activationStrategy: 'symlink',
         
         uploadDestination: function(/*context*/){
           var root = this.readConfig('root');
@@ -91,15 +93,22 @@ module.exports = {
         var activationDestination = this.readConfig('activationDestination');
         var uploadDestination = path.join(this.readConfig('uploadDestination'), '/');
         var activeRevisionPath =  path.join(uploadDestination, revisionKey, '/');
+        var activationStrategy = this.readConfig('activationStrategy');
         var revisionData = {
           revisionData: {
             activatedRevisionKey: revisionKey
           }
         };
+        var linkCmd;
 
         this.log('Activating revision ' + revisionKey);
 
-        var linkCmd = 'ln -fs ' + activeRevisionPath + ' ' + activationDestination;
+        if (activationStrategy === "copy") {
+          linkCmd = 'cp -rf ' + activeRevisionPath + ' ' + activationDestination;
+        } else {
+          linkCmd = 'ln -fs ' + activeRevisionPath + ' ' + activationDestination;
+        }
+        
         
         return new Promise(function(resolve, reject) {
           client.exec(linkCmd).then(
