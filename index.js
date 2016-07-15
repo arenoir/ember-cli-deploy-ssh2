@@ -104,7 +104,7 @@ module.exports = {
         this.log('Activating revision ' + revisionKey);
 
         if (activationStrategy === "copy") {
-          linkCmd = 'cp -rf ' + activeRevisionPath + ' ' + activationDestination;
+          linkCmd = 'cp -TR ' + activeRevisionPath + ' ' + activationDestination;
         } else {
           linkCmd = 'ln -fs ' + activeRevisionPath + ' ' + activationDestination;
         }

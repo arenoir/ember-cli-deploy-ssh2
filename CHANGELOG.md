@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.0.4] - 2016-07-14
+- change copy strategy flags.
+
 ## [0.0.3] - 2016-05-02
 - Add activationStrategy to config options. Because nginx on alpine linux wasn't following a symlink from a alias directive.
 

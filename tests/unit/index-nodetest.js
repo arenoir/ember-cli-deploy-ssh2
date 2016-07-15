@@ -179,7 +179,7 @@ describe('the deploy plugin object', function() {
       });
     });
 
-    it('copies revision to active', function() {
+    it('copies revision to activationDestination if activationStrategy is copy', function() {
       context.config.ssh2.activationStrategy = "copy";
       plugin.configure(context);
       
@@ -187,7 +187,7 @@ describe('the deploy plugin object', function() {
       var client = plugin._client;
 
       return assert.isFulfilled(activating).then(function() {
-        assert.equal(client._command, 'cp -rf /usr/local/www/my-app/revisions/89b1d82820a24bfb075c5b43b36f454b/ /usr/local/www/my-app/active');
+        assert.equal(client._command, 'cp -TR /usr/local/www/my-app/revisions/89b1d82820a24bfb075c5b43b36f454b/ /usr/local/www/my-app/active');
       });
     });
 
