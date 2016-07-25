@@ -28,29 +28,29 @@ module.exports = {
         agent: null,
         port: 22,
         applicationFiles: ['index.html'],
-        
+
         root: function(context) {
-          return path.join('/usr/local/www', context.project.name());
+          return path.posix.join('/usr/local/www', context.project.name());
         },
 
         activationDestination: function(/*context*/) {
           var root = this.readConfig('root');
 
-          return path.join(root, 'active');
+          return path.posix.join(root, 'active');
         },
 
         activationStrategy: 'symlink',
-        
+
         uploadDestination: function(/*context*/){
           var root = this.readConfig('root');
 
-          return path.join(root, 'revisions');
+          return path.posix.join(root, 'revisions');
         },
 
         revisionManifest: function(/*context*/) {
           var root = this.readConfig('root');
 
-          return path.join(root, 'revisions.json');
+          return path.posix.join(root, 'revisions.json');
         },
 
         revisionKey: function(context) {
@@ -60,7 +60,7 @@ module.exports = {
         revisionMeta: function(/*context*/) {
           var revisionKey = this.readConfig('revisionKey');
           var who = username.sync() + '@' + os.hostname();
-          
+
           return {
             revision: revisionKey,
             deployer: who,
@@ -91,8 +91,8 @@ module.exports = {
         var client = this._client;
         var revisionKey = this.readConfig('revisionKey');
         var activationDestination = this.readConfig('activationDestination');
-        var uploadDestination = path.join(this.readConfig('uploadDestination'), '/');
-        var activeRevisionPath =  path.join(uploadDestination, revisionKey, '/');
+        var uploadDestination = path.posix.join(this.readConfig('uploadDestination'), '/');
+        var activeRevisionPath =  path.posix.join(uploadDestination, revisionKey, '/');
         var activationStrategy = this.readConfig('activationStrategy');
         var revisionData = {
           revisionData: {
@@ -108,13 +108,13 @@ module.exports = {
         } else {
           linkCmd = 'ln -fs ' + activeRevisionPath + ' ' + activationDestination;
         }
-        
-        
+
+
         return new Promise(function(resolve, reject) {
           client.exec(linkCmd).then(
             function() {
               _this._activateRevisionManifest().then(
-                resolve(revisionData), 
+                resolve(revisionData),
                 reject
               );
             },
@@ -163,16 +163,16 @@ module.exports = {
         var distDir = this.readConfig('distDir');
         var revisionKey = this.readConfig('revisionKey');
         var uploadDestination = this.readConfig('uploadDestination');
-        var destination = path.join(uploadDestination, revisionKey);
+        var destination = path.posix.join(uploadDestination, revisionKey);
         var _this = this;
-        
+
         this.log('Uploading `applicationFiles` to ' + destination);
 
         var uploading = new Promise(function(resolve, reject) {
           var promises = [];
           files.forEach(function(file) {
             var src = path.join(distDir, file);
-            var dest = path.join(destination, file);
+            var dest = path.posix.join(destination, file);
 
             promises.push(client.putFile(src, dest, _this));
           });
@@ -185,7 +185,7 @@ module.exports = {
             _this.log('Successfully uploaded file/s.', { color: 'green' });
           },
           function() {
-            _this.log('Faild to upload file/s.', { color: 'red' });
+            _this.log('Failed to upload file/s.', { color: 'red' });
           }
         );
 
@@ -213,7 +213,7 @@ module.exports = {
 
               var data = new Buffer(JSON.stringify(manifest), "utf-8");
 
-              client.upload(manifestPath, data, _this).then(resolve, reject);         
+              client.upload(manifestPath, data, _this).then(resolve, reject);
             },
             function(error) {
               _this.log(error, {color: 'red'});
@@ -235,10 +235,10 @@ module.exports = {
         return new Promise(function(resolve, reject) {
           _this._fetchRevisionManifest().then(
             function(manifest) {
-              var existing = manifest.some(function(rev) { 
+              var existing = manifest.some(function(rev) {
                 return rev.revision === revisionKey;
               });
-              
+
               if (existing) {
                 _this.log('Revision ' + revisionKey + ' already added to `revisionManifest` moving on.', {verbose: true});
                 resolve();
@@ -251,7 +251,7 @@ module.exports = {
 
               var data = new Buffer(JSON.stringify(manifest), "utf-8");
 
-              client.upload(manifestPath, data).then(resolve, reject);         
+              client.upload(manifestPath, data).then(resolve, reject);
             },
             function(error) {
               _this.log(error.message, {color: 'red'});
@@ -270,7 +270,7 @@ module.exports = {
           client.readFile(manifestPath).then(
             function(manifest) {
               _this.log('fetched manifest ' + manifestPath, {verbose: true});
-              
+
               resolve(JSON.parse(manifest));
             },
             function(error) {
