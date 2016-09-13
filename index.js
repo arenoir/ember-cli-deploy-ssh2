@@ -106,7 +106,7 @@ module.exports = {
         if (activationStrategy === "copy") {
           linkCmd = 'cp -TR ' + activeRevisionPath + ' ' + activationDestination;
         } else {
-          linkCmd = 'ln -fs ' + activeRevisionPath + ' ' + activationDestination;
+          linkCmd = 'ln -fsn ' + activeRevisionPath + ' ' + activationDestination;
         }
 
 
