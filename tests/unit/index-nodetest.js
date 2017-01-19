@@ -1,7 +1,7 @@
 'use strict';
 
-var fs     = require('node-fs');
-var assert = require('ember-cli/tests/helpers/assert');
+var fs         = require('node-fs');
+var assert     = require('../helpers/assert');
 var CoreObject = require('core-object');
 
 var mockSSHClient = CoreObject.extend({
@@ -88,9 +88,9 @@ describe('the deploy plugin object', function() {
           applicationFiles: ['index.html', 'manifest.appcache'],
           root: '/usr/local/www/my-app',
           distDir: 'tests/fixtures/dist',
-          revisionMeta: function() {
-            var revisionKey = this.readConfig('revisionKey');
-          
+          revisionMeta: function(context, pluginHelper) {
+            var revisionKey = pluginHelper.readConfig('revisionKey');
+
             return {
               revision: revisionKey,
             };
@@ -123,7 +123,7 @@ describe('the deploy plugin object', function() {
         .then(function() {
           var client = plugin._client;
 
-          assert.equal(client._connected, true); 
+          assert.equal(client._connected, true);
         });
     });
 
@@ -132,8 +132,8 @@ describe('the deploy plugin object', function() {
         .then(function() {
           var client = plugin._client;
 
-          assert.equal(client.options.username, "deployer"); 
-          assert.equal(client.options.password, "mypass");         
+          assert.equal(client.options.username, "deployer");
+          assert.equal(client.options.password, "mypass");
         });
     });
   });
@@ -151,20 +151,20 @@ describe('the deploy plugin object', function() {
       var fetching = plugin.fetchRevisions(context);
 
       return assert.isFulfilled(fetching).then(function() {
-        assert.deepEqual(context.revisions, revisions); 
+        assert.deepEqual(context.revisions, revisions);
       });
     });
 
     it('assigins context.revisions proptery to empty array if revistion file not found.', function() {
       var client = plugin._client;
-      
+
       client._readFileError = new Error('No such file');
       client._readFile = null;
 
       var fetching = plugin.fetchRevisions(context);
 
       return assert.isFulfilled(fetching).then(function() {
-        assert.deepEqual(context.revisions, []); 
+        assert.deepEqual(context.revisions, []);
       });
     });
   });
@@ -182,7 +182,7 @@ describe('the deploy plugin object', function() {
     it('copies revision to activationDestination if activationStrategy is copy', function() {
       context.config.ssh2.activationStrategy = "copy";
       plugin.configure(context);
-      
+
       var activating = plugin.activate(context);
       var client = plugin._client;
 
@@ -215,13 +215,13 @@ describe('the deploy plugin object', function() {
       files[manifestPath] = JSON.stringify(revisions);
 
       client._uploadedFiles = files;
-      
+
       var uploading = plugin.upload(context);
 
       return assert.isFulfilled(uploading).then(function() {
         var manifest = client._uploadedFiles[manifestPath];
         revisions.unshift({'revision': '89b1d82820a24bfb075c5b43b36f454b'});
-        assert.equal(JSON.stringify(revisions), manifest); 
+        assert.equal(JSON.stringify(revisions), manifest);
       });
     });
 
@@ -231,10 +231,10 @@ describe('the deploy plugin object', function() {
 
 
       // return assert.isFulfilled(uploading).then(function() {
-        
+
       //   var index = client._uploadedFiles['/usr/local/www/my-app/revisions/89b1d82820a24bfb075c5b43b36f454b/index.html']
 
-      //   assert.equal(index, 'indexpage'); 
+      //   assert.equal(index, 'indexpage');
       // });
     });
   });

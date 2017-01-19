@@ -1,10 +1,7 @@
 'use strict';
 
-var assert    = require('ember-cli/tests/helpers/assert');
-//var chai      = require('chai');
-//var lodash    = require('lodash');
+var assert = require('../../helpers/assert');
 var Client = require('../../../lib/ssh-client');
-
 
 describe('ssh-client', function() {
   var options = {

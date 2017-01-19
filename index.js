@@ -33,22 +33,22 @@ module.exports = {
           return path.posix.join('/usr/local/www', context.project.name());
         },
 
-        activationDestination: function(/*context*/) {
-          var root = this.readConfig('root');
+        activationDestination: function(context, pluginHelper) {
+          var root = pluginHelper.readConfig('root');
 
           return path.posix.join(root, 'active');
         },
 
         activationStrategy: 'symlink',
 
-        uploadDestination: function(/*context*/){
-          var root = this.readConfig('root');
+        uploadDestination: function(context, pluginHelper){
+          var root = pluginHelper.readConfig('root');
 
           return path.posix.join(root, 'revisions');
         },
 
-        revisionManifest: function(/*context*/) {
-          var root = this.readConfig('root');
+        revisionManifest: function(context, pluginHelper) {
+          var root = pluginHelper.readConfig('root');
 
           return path.posix.join(root, 'revisions.json');
         },
@@ -57,8 +57,8 @@ module.exports = {
           return (context.commandOptions && context.commandOptions.revision) || (context.revisionData && context.revisionData.revisionKey);
         },
 
-        revisionMeta: function(/*context*/) {
-          var revisionKey = this.readConfig('revisionKey');
+        revisionMeta: function(context, pluginHelper) {
+          var revisionKey = pluginHelper.readConfig('revisionKey');
           var who = username.sync() + '@' + os.hostname();
 
           return {
