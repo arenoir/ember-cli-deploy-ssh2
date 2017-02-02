@@ -109,51 +109,38 @@ module.exports = {
           linkCmd = 'ln -fsn ' + activeRevisionPath + ' ' + activationDestination;
         }
 
-
-        return new Promise(function(resolve, reject) {
-          client.exec(linkCmd).then(
-            function() {
-              _this._activateRevisionManifest().then(
-                resolve(revisionData),
-                reject
-              );
-            },
-            reject
-          );
-        });
+        return client
+          .exec(linkCmd)
+          .then(function() {
+            return _this
+              ._activateRevisionManifest()
+              .then(function() {
+                return revisionData;
+              });
+          });
       },
 
-
       fetchRevisions: function(context) {
-        var _this = this;
         this.log('Fetching Revisions');
 
-        return this._fetchRevisionManifest().then(
-          function(manifest) {
-            context.revisions = manifest;
-          },
-          function(error) {
-            _this.log(error, {color: 'red'});
-          }
-        );
+        return this._fetchRevisionManifest().then(function(manifest) {
+          context.revisions = manifest;
+        });
       },
 
       upload: function(/*context*/) {
         var _this = this;
 
-        return this._updateRevisionManifest().then(
-          function() {
-            _this.log('Successfully uploaded updated manifest.', {verbose: true});
+        return this._updateRevisionManifest().then(function() {
+          _this.log('Successfully uploaded updated manifest.', {verbose: true});
 
-            return _this._uploadApplicationFiles();
-          },
-          function(error) {
-            _this.log(error, {color: "red"});
-          }
-        );
+          return _this._uploadApplicationFiles();
+        });
       },
 
       teardown: function(/*context*/) {
+        this.log('Teardown - closing sftp connection.', { verbose: true });
+
         return this._client.disconnect();
       },
 
@@ -168,19 +155,15 @@ module.exports = {
 
         this.log('Uploading `applicationFiles` to ' + destination);
 
-        var uploading = new Promise(function(resolve, reject) {
-          var promises = [];
-          files.forEach(function(file) {
-            var src = path.join(distDir, file);
-            var dest = path.posix.join(destination, file);
+        var promises = [];
+        files.forEach(function(file) {
+          var src = path.join(distDir, file);
+          var dest = path.posix.join(destination, file);
 
-            promises.push(client.putFile(src, dest, _this));
-          });
-
-          Promise.all(promises).then(resolve, reject);
+          promises.push(client.putFile(src, dest));
         });
 
-        uploading.then(
+        return Promise.all(promises).then(
           function() {
             _this.log('Successfully uploaded file/s.', { color: 'green' });
           },
@@ -188,77 +171,62 @@ module.exports = {
             _this.log('Failed to upload file/s.', { color: 'red' });
           }
         );
-
-        return uploading;
       },
 
       _activateRevisionManifest: function(/*context*/) {
         var _this = this;
-        var client = this._client;
         var revisionKey = this.readConfig('revisionKey');
-        var fetching = this._fetchRevisionManifest();
         var manifestPath = this.readConfig('revisionManifest');
 
-        return new Promise(function(resolve, reject) {
-          fetching.then(
-            function(manifest) {
-              manifest = lodash.map(manifest, function(rev) {
-                if (rev.revision = revisionKey) {
-                  rev.active = true;
-                } else {
-                  delete rev['active'];
-                }
-                return rev;
-              });
+        return this._fetchRevisionManifest().then(
+          function(manifest) {
+            manifest = lodash.map(manifest, function(rev) {
+              if (rev.revision = revisionKey) {
+                rev.active = true;
+              } else {
+                delete rev['active'];
+              }
 
-              var data = new Buffer(JSON.stringify(manifest), "utf-8");
+              return rev;
+            });
 
-              client.upload(manifestPath, data, _this).then(resolve, reject);
-            },
-            function(error) {
-              _this.log(error, {color: 'red'});
-              reject(error);
-            }
-          );
-        });
+            return _this._uploadRevisionManifest(manifestPath, manifest);
+          },
+          function(error) {
+            _this.log(error.message, {color: 'red'});
+          }
+        );
       },
 
       _updateRevisionManifest: function() {
         var revisionKey  = this.readConfig('revisionKey');
         var revisionMeta = this.readConfig('revisionMeta');
         var manifestPath = this.readConfig('revisionManifest');
-        var client       = this._client;
         var _this        = this;
 
         this.log('Updating `revisionManifest` ' + manifestPath, {verbose: true});
 
-        return new Promise(function(resolve, reject) {
-          _this._fetchRevisionManifest().then(
-            function(manifest) {
-              var existing = manifest.some(function(rev) {
-                return rev.revision === revisionKey;
-              });
+        return this._fetchRevisionManifest().then(
+          function(manifest) {
+            var existing = manifest.some(function(rev) {
+              return rev.revision === revisionKey;
+            });
 
-              if (existing) {
-                _this.log('Revision ' + revisionKey + ' already added to `revisionManifest` moving on.', {verbose: true});
-                resolve();
-                return;
-              }
-
-              _this.log('Adding ' + JSON.stringify(revisionMeta), {verbose: true});
-
-              manifest.unshift(revisionMeta);
-
-              var data = new Buffer(JSON.stringify(manifest), "utf-8");
-
-              client.upload(manifestPath, data).then(resolve, reject);
-            },
-            function(error) {
-              _this.log(error.message, {color: 'red'});
-              reject(error);
+            if (existing) {
+              _this.log('Revision ' + revisionKey + ' already added to `revisionManifest` moving on.', {verbose: true});
+              return;
             }
-          );
-        });
+
+            _this.log('Adding ' + JSON.stringify(revisionMeta), {verbose: true});
+
+            manifest.unshift(revisionMeta);
+
+            return _this._uploadRevisionManifest(manifestPath, manifest);
+          },
+          function(error) {
+            _this.log(error.message, {color: 'red'});
+          }
+        );
       },
 
       _fetchRevisionManifest: function() {
@@ -266,25 +234,28 @@ module.exports = {
         var client = this._client;
         var _this = this;
 
-        return new Promise(function(resolve, reject) {
-          client.readFile(manifestPath).then(
-            function(manifest) {
-              _this.log('fetched manifest ' + manifestPath, {verbose: true});
+        return client.readFile(manifestPath).then(
+          function(manifest) {
+            _this.log('fetched manifest ' + manifestPath, {verbose: true});
 
-              resolve(JSON.parse(manifest));
-            },
-            function(error) {
-              if (error.message === "No such file") {
-                _this.log('Revision manifest not present building new one.', {verbose: true});
+            return lodash.isEmpty(manifest) ? [] : JSON.parse(manifest);
+          },
+          function(error) {
+            if (error.message === "No such file") {
+              _this.log('Revision manifest not present building new one.', {verbose: true});
 
-                resolve([]);
-              } else {
-                _this.log(error.message, {color: 'red'});
-                reject(error);
-              }
+              return [];
+            } else {
+              _this.log(error.message, {color: 'red'});
             }
-          );
-        });
+          }
+        );
+      },
+
+      _uploadRevisionManifest: function(manifestPath, manifest) {
+        var data = new Buffer(JSON.stringify(manifest), "utf-8");
+
+        return this._client.upload(manifestPath, data);
       }
     });
 
