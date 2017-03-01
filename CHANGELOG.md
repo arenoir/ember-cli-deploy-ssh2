@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.5] - 2017-03-01
+- [Pull Request #13](https://github.com/arenoir/ember-cli-deploy-ssh2/pull/13) Make sure _fetchRevisionManifest works if the manifest is empty
+- [Pull Request #12](https://github.com/arenoir/ember-cli-deploy-ssh2/pull/12) update ember cli
+
 ## [0.0.4] - 2016-07-14
 - change copy strategy flags.
 
