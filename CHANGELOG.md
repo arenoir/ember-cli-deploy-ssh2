@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.0.6] - 2017-04-21
+- [Pull Request #14](https://github.com/arenoir/ember-cli-deploy-ssh2/pull/14) Fix ember-cli/ext/promise Deprecation for Ember CLI >=2.12.0
+
 ## [0.0.5] - 2017-03-01
 - [Pull Request #13](https://github.com/arenoir/ember-cli-deploy-ssh2/pull/13) Make sure _fetchRevisionManifest works if the manifest is empty
 - [Pull Request #12](https://github.com/arenoir/ember-cli-deploy-ssh2/pull/12) update ember cli
