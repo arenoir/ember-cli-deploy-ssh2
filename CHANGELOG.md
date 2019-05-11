@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.0.7] - 2019-05-11
+- [Pull Request #16](https://github.com/arenoir/ember-cli-deploy-ssh2/pull/16) Close sftp channels/connections
+
 ## [0.0.6] - 2017-04-21
 - [Pull Request #14](https://github.com/arenoir/ember-cli-deploy-ssh2/pull/14) Fix ember-cli/ext/promise Deprecation for Ember CLI >=2.12.0
 
