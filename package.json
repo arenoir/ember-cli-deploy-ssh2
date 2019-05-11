@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-deploy-ssh2",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "An ember-cli-deploy plugin to upload activate and list versioned application file/s using ssh.",
   "keywords": [
     "ember-addon",
@@ -39,7 +39,7 @@
     "multiline": "^1.0.2"
   },
   "engines": {
-    "node": ">= 0.12.0"
+    "node": "6.* || 8.* || >= 10.*"
   },
   "ember-addon": {
     "configPath": "tests/dummy/config"
