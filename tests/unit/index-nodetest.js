@@ -1,6 +1,6 @@
 'use strict';
 
-var fs         = require('node-fs');
+var fs         = require('fs');
 var assert     = require('../helpers/assert');
 var CoreObject = require('core-object');
 

@@ -1,17 +1,10 @@
 ---
 language: node_js
 node_js:
-  - "4"
+  - "10"
 
 sudo: false
 
-cache:
-  directories:
-    - $HOME/.npm
-    - $HOME/.cache # includes bowers cache
-
-before_install:
-  - npm config set spin false
 
 install:
   - npm install
